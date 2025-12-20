@@ -1,0 +1,41 @@
+# Elastic Beanstalk Files
+.elasticbeanstalk/
+.git/
+.gitignore
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Sensitive files
+.env
+credentials.json
+gmail-token.json
+
+# Test files
+test-*.js
+attio-transcript-raw.txt
+attio-output-formatted.txt
+
+# Documentation
+*.md
+!README.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Terminals
+terminals/
+
+
+
+

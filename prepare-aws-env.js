@@ -1,0 +1,52 @@
+import { readFileSync } from 'fs';
+
+console.log('📋 Preparing Environment Variables for AWS\n');
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+try {
+  // Read credentials.json
+  const credentials = readFileSync('./credentials.json', 'utf-8');
+  const credentialsMinified = JSON.stringify(JSON.parse(credentials));
+  
+  // Read gmail-token.json
+  const token = readFileSync('./gmail-token.json', 'utf-8');
+  const tokenMinified = JSON.stringify(JSON.parse(token));
+  
+  // Read .env file for API keys
+  const env = readFileSync('./.env', 'utf-8');
+  const attioKey = env.match(/ATTIO_API_KEY=(.+)/)?.[1];
+  const anthropicKey = env.match(/ANTHROPIC_API_KEY=(.+)/)?.[1];
+  
+  console.log('✅ Files loaded successfully\n');
+  console.log('Copy and paste these commands to set your AWS environment variables:\n');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  
+  console.log('# For EB CLI:');
+  console.log('eb setenv \\');
+  console.log(`  ATTIO_API_KEY="${attioKey}" \\`);
+  console.log(`  ANTHROPIC_API_KEY="${anthropicKey}" \\`);
+  console.log(`  GMAIL_CREDENTIALS='${credentialsMinified}' \\`);
+  console.log(`  GMAIL_TOKEN='${tokenMinified}'`);
+  
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  console.log('# Or set them individually:');
+  console.log(`eb setenv ATTIO_API_KEY="${attioKey}"`);
+  console.log(`eb setenv ANTHROPIC_API_KEY="${anthropicKey}"`);
+  console.log(`eb setenv GMAIL_CREDENTIALS='${credentialsMinified}'`);
+  console.log(`eb setenv GMAIL_TOKEN='${tokenMinified}'`);
+  
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  console.log('✅ Ready to deploy to AWS!\n');
+  
+} catch (error) {
+  console.error('❌ Error:', error.message);
+  console.error('\nMake sure you have:');
+  console.error('  - credentials.json');
+  console.error('  - gmail-token.json');
+  console.error('  - .env with ATTIO_API_KEY and ANTHROPIC_API_KEY');
+  process.exit(1);
+}
+
+
+
+
