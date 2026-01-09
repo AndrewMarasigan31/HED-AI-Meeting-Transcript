@@ -81,10 +81,17 @@ export async function authorize() {
     
     if (oAuth2Client.isTokenExpiring()) {
       console.log('🔄 Token expiring, refreshing...');
-      const { credentials: newTokens } = await oAuth2Client.refreshAccessToken();
-      oAuth2Client.setCredentials(newTokens);
-      saveToken(newTokens);
-      console.log('✅ Token refreshed');
+      try {
+        const { credentials: newTokens } = await oAuth2Client.refreshAccessToken();
+        oAuth2Client.setCredentials(newTokens);
+        saveToken(newTokens);
+        console.log('✅ Token refreshed');
+      } catch (refreshError) {
+        if (refreshError.message.includes('invalid_grant')) {
+          throw new Error('Gmail refresh token has expired. Please regenerate it by running: npm run gmail-auth');
+        }
+        throw refreshError;
+      }
     }
     
     return oAuth2Client;

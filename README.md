@@ -1,15 +1,52 @@
-# Attio Meeting Transcript Formatter
+# Attio Meeting Notes Automation
 
-This Node.js script formats meeting transcripts using Claude API to match Attio CRM's exact insight template format.
+Automated webhook system that processes Attio meeting recordings and creates formatted Gmail drafts using Claude AI.
 
-## 📋 What It Does
+## 🎯 What It Does
 
-Takes raw meeting transcripts and formats them into Attio's 5-section structure:
-1. **Meeting Notes** - Discussion summary
-2. **Campaign Updates, Metrics, and Performance** - Detailed metrics
-3. **Key Decisions** - Decisions made
-4. **Action Items** - Table with responsible person, action, and due date
-5. **Next Meeting Agenda** - Topics for next meeting
+When a meeting recording is created in Attio, this system automatically:
+1. **Receives webhook** from Attio (`call-recording.created` event)
+2. **Fetches transcript** from Attio API
+3. **Formats with Claude AI** into 5 structured sections:
+   - Meeting Notes
+   - Campaign Updates, Metrics, and Performance
+   - Key Decisions
+   - Action Items (table format)
+   - Next Meeting Agenda
+4. **Creates Gmail draft** with formatted notes
+
+## 🏗️ Architecture
+
+```
+Attio Meeting Ends → Recording Processed → Webhook Triggered
+                                                 ↓
+                                    Your Webhook Server (AWS/Local)
+                                                 ↓
+                              Fetch Transcript (Attio API)
+                                                 ↓
+                              Format Notes (Claude AI)
+                                                 ↓
+                              Create Gmail Draft
+```
+
+## 📁 Project Structure
+
+```
+HED-AI-Meeting-Transcript/
+├── src/
+│   ├── webhook-server.js      # Express webhook server
+│   ├── attio-client.js        # Attio API integration
+│   ├── claude-formatter.js    # Claude AI formatting
+│   ├── gmail-client.js        # Gmail draft creation
+│   ├── gmail-auth.js          # Gmail OAuth
+│   ├── gmail-auth-setup.js    # Gmail setup script
+│   └── load-env.js           # Environment config
+├── check-missing-recordings.js # Utility to check unprocessed recordings
+├── notification-client.js     # Telegram notifications (optional)
+├── prepare-aws-env.js        # AWS deployment helper
+├── Procfile                  # Heroku/AWS deployment
+└── package.json              # Dependencies and scripts
+```
 
 ## 🚀 Quick Start
 
@@ -19,119 +56,155 @@ Takes raw meeting transcripts and formats them into Attio's 5-section structure:
 npm install
 ```
 
-### 2. Set Your API Key
+### 2. Set Up Environment Variables
 
-Option A: Environment variable (recommended)
-```bash
-export ANTHROPIC_API_KEY=your_key_here
+Create a `.env` file with:
+
+```env
+ATTIO_API_KEY=your_attio_api_key
+ANTHROPIC_API_KEY=your_anthropic_api_key
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token  # Optional
+TELEGRAM_CHAT_ID=your_chat_id              # Optional
 ```
 
-Option B: Edit `test-formatting.js`
-```javascript
-const ANTHROPIC_API_KEY = 'your_key_here';
-```
-
-Get your API key from: https://console.anthropic.com/settings/keys
-
-### 3. Add Your Transcript
-
-Edit `test-formatting.js` and update the `testMeeting` object:
-
-```javascript
-const testMeeting = {
-  title: '[MCA] Check-in',
-  date: 'December 14, 2024',
-  participants: 'Katie, Erin, Stella, Ari',
-  transcript: `
-[Paste your full transcript here]
-`
-};
-```
-
-### 4. Run the Formatter
+### 3. Set Up Gmail OAuth
 
 ```bash
-npm test
+npm run gmail-auth
 ```
 
-or
+Follow the instructions to authenticate with Gmail. This creates `gmail-token.json`.
+
+### 4. Run the Webhook Server
+
+**Local development:**
+```bash
+npm run webhook
+```
+
+**Production:**
+```bash
+npm start
+```
+
+Server runs on port 3000 (or PORT environment variable).
+
+## 📋 Available Scripts
+
+| Script | Command | Description |
+|--------|---------|-------------|
+| Start server | `npm start` | Run webhook server (production) |
+| Start server | `npm run webhook` | Run webhook server (development) |
+| Gmail auth | `npm run gmail-auth` | Set up Gmail OAuth |
+| Check recordings | `npm run check-missing` | Check for unprocessed recordings |
+| AWS prep | `npm run prepare-aws-env` | Prepare AWS environment file |
+
+## 🔧 Deployment
+
+### AWS Elastic Beanstalk
+
+1. **Prepare environment:**
+   ```bash
+   npm run prepare-aws-env
+   ```
+
+2. **Follow AWS deployment guide:**
+   See `AWS-CONSOLE-DEPLOYMENT.md` for detailed instructions.
+
+3. **Register webhook in Attio:**
+   - Go to Attio Settings → Webhooks
+   - Add webhook URL: `https://your-app-url/webhooks/attio/call-recording-created`
+   - Select event: `call-recording.created`
+
+## 📖 Documentation
+
+- **[AWS Deployment Guide](AWS-CONSOLE-DEPLOYMENT.md)** - Deploy to AWS Elastic Beanstalk
+- **[Gmail Setup Guide](GMAIL-SETUP-GUIDE.md)** - Set up Gmail OAuth
+- **[Webhook Setup Guide](WEBHOOK-SETUP.md)** - Configure Attio webhooks
+- **[Telegram Setup Guide](TELEGRAM-SETUP-GUIDE.md)** - Optional notifications
+- **[Attio API Reference](attio_api.md)** - Attio API endpoints
+
+## 🛠️ Utilities
+
+### Check for Unprocessed Recordings
 
 ```bash
-npm run format
+npm run check-missing
 ```
 
-## 📊 Output
+This script:
+- Checks Gmail drafts for processed meetings
+- Queries Attio for meetings with recordings
+- Identifies recordings that haven't been processed
+- Useful for troubleshooting webhook issues
 
-The script will:
-- Display formatted output in the console
-- Save output to `output.txt`
-- Show success/error messages
+## 🔍 Troubleshooting
 
-## 🎯 Based on Real Attio Analysis
+### Webhook Not Triggering
 
-This prompt was reverse-engineered from actual Attio outputs analyzing:
-- Exact punctuation patterns (commas vs periods)
-- Bullet point structure (flat vs nested)
-- Detail level and specificity
-- Table formatting
-- Tense usage (past tense throughout)
+1. **Check webhook registration** in Attio settings
+2. **Verify server is running** and publicly accessible
+3. **Check logs** for errors
 
-See `attio-format-analysis.md` for the complete analysis.
+### "Missing environment variables"
 
-## 📁 Files
+Make sure `.env` file exists with all required keys:
+- `ATTIO_API_KEY`
+- `ANTHROPIC_API_KEY`
 
-- `test-formatting.js` - Main script with Claude integration
-- `package.json` - Project dependencies
-- `sample-transcript.txt` - Template for transcripts
-- `attio-format-analysis.md` - Detailed analysis of Attio's patterns
-- `output.txt` - Generated output (created after first run)
+### Gmail Token Expired
 
-## 🔧 Troubleshooting
+Run `npm run gmail-auth` to refresh the token.
 
-### "Cannot use import statement"
-Make sure `"type": "module"` is in package.json (already included)
+### No Recordings Found
 
-### "Invalid API key"
-- Verify your key at https://console.anthropic.com/settings/keys
-- Make sure it's set correctly (no extra spaces)
+Recordings are only created after meetings end and Attio processes them. The webhook triggers when the recording is ready, not when the meeting is created.
 
-### "Rate limit error"
-- Wait 60 seconds and try again
-- Check your API usage limits
+## 🔐 Security
 
-### Empty or incorrect output
-- Ensure transcript has actual content
-- Check that transcript format is natural conversation
-- Review the prompt in `buildPrompt()` function
+- **Never commit** `.env`, `gmail-token.json`, or `credentials.json`
+- Store sensitive data in environment variables for production
+- Use AWS Secrets Manager or similar for production deployments
 
-## 💡 Tips
+## 📝 API Permissions Required
 
-1. **Test with multiple transcripts** - Each meeting type may need slight tweaks
-2. **Compare with Attio** - Put outputs side-by-side to spot differences
-3. **Iterate the prompt** - Adjust `buildPrompt()` based on results
-4. **Check punctuation** - Commas vs periods matter in Attio's format
-5. **Review action items** - Make sure empty due dates are actually empty (not "TBD")
+**Attio API:**
+- Meetings: Read
+- Call Recordings: Read
 
-## 📈 Next Steps
+**Gmail API:**
+- Gmail: Modify (for creating drafts)
 
-1. Run with your 3 sample transcripts from the CSV
-2. Compare outputs with Attio's actual outputs
-3. Note any formatting differences
-4. Provide feedback for prompt refinement
-5. Iterate until 95%+ match
+**Anthropic API:**
+- Claude API access
 
-## 🛠️ Customization
+## 🎯 Features
 
-To adjust the formatting, edit the `buildPrompt()` function in `test-formatting.js`.
+- ✅ Automatic webhook processing
+- ✅ Pagination support for long transcripts
+- ✅ Two-pass Claude AI formatting
+- ✅ HTML email formatting
+- ✅ Error handling and logging
+- ✅ Health check endpoint
+- ✅ Optional Telegram notifications
+- ✅ Utility scripts for monitoring
 
-Key areas to customize:
-- Section rules and examples
-- Punctuation patterns
-- Detail level instructions
-- Tone and tense guidelines
+## 📊 Monitoring
+
+Check if recordings are being processed:
+```bash
+npm run check-missing
+```
+
+Check server health:
+```bash
+curl https://your-server-url/health
+```
+
+## 🤝 Contributing
+
+This is an internal automation tool. For issues or improvements, update the code and redeploy.
 
 ---
 
-Built for matching Attio CRM's insight template format exactly.
-
-
+**Built for Half Eaten Donut** - Attio CRM Meeting Notes Automation

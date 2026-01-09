@@ -6,13 +6,13 @@
   "main": "test-formatting.js",
   "scripts": {
     "gmail-auth": "node src/gmail-auth-setup.js",
-    "test-attio": "node test-attio-api.js",
-    "test-webhook": "node test-webhook.js",
-    "test-gmail-format": "node test-gmail-format.js",
-    "test-telegram": "node test-telegram.js",
     "webhook": "node src/webhook-server.js",
     "start": "node src/webhook-server.js",
-    "prepare-aws-env": "node prepare-aws-env.js"
+    "prepare-aws-env": "node prepare-aws-env.js",
+    "check-missing": "node check-missing-recordings.js",
+    "process-meeting": "node process-meeting.js",
+    "process-all": "node process-all-meetings.js",
+    "test-webhook": "node test-webhook.js"
   },
   "keywords": ["attio", "claude", "meeting", "transcript", "formatter"],
   "author": "",

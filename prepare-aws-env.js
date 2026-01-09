@@ -16,17 +16,24 @@ try {
   const env = readFileSync('./.env', 'utf-8');
   const attioKey = env.match(/ATTIO_API_KEY=(.+)/)?.[1];
   const anthropicKey = env.match(/ANTHROPIC_API_KEY=(.+)/)?.[1];
+  const webhookSecret = env.match(/WEBHOOK_SECRET=(.+)/)?.[1];
   
   console.log('✅ Files loaded successfully\n');
   console.log('Copy and paste these commands to set your AWS environment variables:\n');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
   
   console.log('# For EB CLI:');
-  console.log('eb setenv \\');
-  console.log(`  ATTIO_API_KEY="${attioKey}" \\`);
-  console.log(`  ANTHROPIC_API_KEY="${anthropicKey}" \\`);
-  console.log(`  GMAIL_CREDENTIALS='${credentialsMinified}' \\`);
-  console.log(`  GMAIL_TOKEN='${tokenMinified}'`);
+  let ebCommand = 'eb setenv \\\n';
+  ebCommand += `  ATTIO_API_KEY="${attioKey}" \\\n`;
+  ebCommand += `  ANTHROPIC_API_KEY="${anthropicKey}" \\\n`;
+  ebCommand += `  GMAIL_CREDENTIALS='${credentialsMinified}' \\\n`;
+  ebCommand += `  GMAIL_TOKEN='${tokenMinified}'`;
+  
+  if (webhookSecret) {
+    ebCommand += ` \\\n  WEBHOOK_SECRET="${webhookSecret}"`;
+  }
+  
+  console.log(ebCommand);
   
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
   console.log('# Or set them individually:');
@@ -34,6 +41,13 @@ try {
   console.log(`eb setenv ANTHROPIC_API_KEY="${anthropicKey}"`);
   console.log(`eb setenv GMAIL_CREDENTIALS='${credentialsMinified}'`);
   console.log(`eb setenv GMAIL_TOKEN='${tokenMinified}'`);
+  
+  if (webhookSecret) {
+    console.log(`eb setenv WEBHOOK_SECRET="${webhookSecret}"`);
+    console.log('\n💡 WEBHOOK_SECRET is optional but recommended for security');
+  } else {
+    console.log('\n💡 WEBHOOK_SECRET not found in .env (optional - webhook signature verification will be disabled)');
+  }
   
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
   console.log('✅ Ready to deploy to AWS!\n');
