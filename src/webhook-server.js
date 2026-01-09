@@ -175,7 +175,22 @@ app.post('/webhooks/attio/call-recording-created', async (req, res) => {
     }
     
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // STEP 2: Fetch Meeting Data from Attio
+    // RESPOND IMMEDIATELY (for Attio test to pass)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    
+    // Send 202 Accepted response immediately
+    res.status(202).json({
+      success: true,
+      message: 'Webhook received and processing',
+      meeting_id: meeting_id,
+      recording_id: call_recording_id
+    });
+    
+    console.log('   ✅ Responded 202 Accepted to Attio');
+    console.log('   🔄 Processing in background...\n');
+    
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // STEP 2: Fetch Meeting Data from Attio (ASYNC)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     
     console.log('\n📡 Step 1/3: Fetching meeting data from Attio...');
@@ -224,12 +239,7 @@ app.post('/webhooks/attio/call-recording-created', async (req, res) => {
     console.log(`   Draft ID: ${draft.id}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     
-    return res.status(200).json({ 
-      success: true,
-      meeting_id,
-      draft_id: draft.id,
-      processing_time_seconds: parseFloat(elapsedTime)
-    });
+    // Response already sent (202 Accepted), just log success
     
   } catch (error) {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -250,22 +260,15 @@ app.post('/webhooks/attio/call-recording-created', async (req, res) => {
       console.error(error.stack);
     }
     
-    // Send error notification (non-blocking)
+    // Response already sent (202 Accepted)
+    // Error logged above for manual review
+    
     // TODO: Implement error notifications if needed
-    // const webhookPayload = req.body;
     // sendNotification('error', {
     //   meetingId: webhookPayload?.id?.meeting_id || 'Unknown',
     //   recordingId: webhookPayload?.id?.call_recording_id || 'Unknown',
     //   error: error.message
     // }).catch(err => console.error('Notification failed:', err.message));
-    
-    // Still return 200 to prevent Attio from retrying
-    // (Log the error for manual review instead)
-    return res.status(200).json({ 
-      success: false,
-      error: error.message,
-      processing_time_seconds: parseFloat(elapsedTime)
-    });
   }
 });
 
