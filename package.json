@@ -14,7 +14,8 @@
     "process-all": "node process-all-meetings.js",
     "test-webhook": "node test-webhook.js",
     "test-json": "node test-json-payload.js",
-    "deploy-aws": "node deploy-to-aws.js"
+    "deploy-aws": "node deploy-to-aws.js",
+    "poll-now": "node src/polling-service.js"
   },
   "keywords": ["attio", "claude", "meeting", "transcript", "formatter"],
   "author": "",

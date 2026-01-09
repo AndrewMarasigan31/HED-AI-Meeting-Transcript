@@ -5,6 +5,7 @@ import express from 'express';
 import { getAttioMeetingData } from './attio-client.js';
 import { formatMeetingNotes } from './claude-formatter.js';
 import { createGmailDraft } from './gmail-client.js';
+import { startPollingService } from './polling-service.js';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CONFIGURATION
@@ -288,14 +289,18 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🚀 Attio Meeting Notes Webhook Server');
+  console.log('🚀 Attio Meeting Notes Automation Server');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`   Status: Running`);
   console.log(`   Port: ${PORT}`);
+  console.log(`   Mode: Hybrid (Webhook + Polling)`);
   console.log(`   Health: http://localhost:${PORT}/health`);
   console.log(`   Webhook: http://localhost:${PORT}/webhooks/attio/call-recording-created`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('\n✅ Ready to receive webhooks from Attio!');
+  console.log('\n✅ Webhook server ready!');
   console.log('📝 Waiting for call-recording.created events...\n');
+  
+  // Start the polling service
+  startPollingService();
 });
 
