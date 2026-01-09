@@ -18,7 +18,74 @@ const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET; // Optional: for signature ve
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const app = express();
-app.use(express.json());
+
+// JSON parsing with error handling
+app.use(express.json({
+  limit: '10mb', // Allow larger payloads
+  verify: (req, res, buf, encoding) => {
+    // Store raw body for signature verification if needed
+    req.rawBody = buf.toString(encoding || 'utf8');
+  }
+}));
+
+// JSON parsing error handler
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.error('❌ JSON Parse Error');
+    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.error(`   Path: ${req.path}`);
+    console.error(`   Method: ${req.method}`);
+    console.error(`   Content-Type: ${req.get('Content-Type')}`);
+    console.error(`   Error: ${err.message}`);
+    console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    
+    return res.status(400).json({ 
+      success: false,
+      error: 'Invalid JSON payload',
+      message: 'Request body must be valid JSON',
+      details: err.message
+    });
+  }
+  next();
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// REQUEST LOGGING MIDDLEWARE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app.use((req, res, next) => {
+  // Skip logging for health checks to reduce noise
+  if (req.path === '/health' || req.path === '/') {
+    return next();
+  }
+  
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📥 Incoming Request');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`   Method: ${req.method}`);
+  console.log(`   Path: ${req.path}`);
+  console.log(`   Content-Type: ${req.get('Content-Type') || 'not set'}`);
+  console.log(`   Content-Length: ${req.get('Content-Length') || 'not set'}`);
+  console.log(`   User-Agent: ${req.get('User-Agent') || 'not set'}`);
+  
+  // Log headers (excluding sensitive ones)
+  const relevantHeaders = ['attio-signature', 'x-forwarded-for', 'x-real-ip'];
+  relevantHeaders.forEach(header => {
+    const value = req.get(header);
+    if (value) {
+      console.log(`   ${header}: ${value}`);
+    }
+  });
+  
+  // Log body preview if present
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log(`   Body Preview: ${JSON.stringify(req.body).substring(0, 200)}...`);
+  }
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  
+  next();
+});
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // HEALTH CHECK ENDPOINT
@@ -60,8 +127,20 @@ app.post('/webhooks/attio/call-recording-created', async (req, res) => {
   console.log('📨 Webhook Received: call-recording.created');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`   Timestamp: ${new Date().toISOString()}`);
+  console.log(`   Payload: ${JSON.stringify(webhookPayload, null, 2)}`);
   
   try {
+    // Validate that body was parsed (note: typeof null === 'object' in JavaScript!)
+    if (webhookPayload === null || webhookPayload === undefined || 
+        typeof webhookPayload !== 'object' || Array.isArray(webhookPayload)) {
+      console.log('❌ Webhook payload is empty, null, or not a valid object');
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid JSON payload',
+        message: 'Request body must be valid JSON object',
+        received_type: webhookPayload === null ? 'null' : typeof webhookPayload
+      });
+    }
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // STEP 1: Validate Webhook Payload
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

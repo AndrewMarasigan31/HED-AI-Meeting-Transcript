@@ -12,7 +12,9 @@
     "check-missing": "node check-missing-recordings.js",
     "process-meeting": "node process-meeting.js",
     "process-all": "node process-all-meetings.js",
-    "test-webhook": "node test-webhook.js"
+    "test-webhook": "node test-webhook.js",
+    "test-json": "node test-json-payload.js",
+    "deploy-aws": "node deploy-to-aws.js"
   },
   "keywords": ["attio", "claude", "meeting", "transcript", "formatter"],
   "author": "",
