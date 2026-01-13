@@ -20,26 +20,39 @@ export const handler = async (event) => {
 
   try {
     // Parse incoming webhook payload
-    const webhookPayload = typeof event.body === 'string' 
-      ? JSON.parse(event.body) 
+    const webhookPayload = typeof event.body === 'string'
+      ? JSON.parse(event.body)
       : event.body;
 
+    // Extract first event from events array
+    const webhookEvent = webhookPayload.events?.[0];
+
+    if (!webhookEvent) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: 'No events found in webhook payload'
+        })
+      };
+    }
+
     // Validate event type
-    if (webhookPayload.event_type !== 'call-recording.created') {
+    if (webhookEvent.event_type !== 'call-recording.created') {
       return {
         statusCode: 400,
         body: JSON.stringify({
           success: false,
           error: 'Invalid event type',
           expected: 'call-recording.created',
-          received: webhookPayload.event_type
+          received: webhookEvent.event_type
         })
       };
     }
 
     // Extract IDs
-    const { meeting_id, call_recording_id } = webhookPayload.id || {};
-    
+    const { meeting_id, call_recording_id } = webhookEvent.id || {};
+
     if (!meeting_id || !call_recording_id) {
       return {
         statusCode: 400,
