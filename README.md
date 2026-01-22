@@ -184,13 +184,15 @@ View detailed logs:
    - `✅ Gmail draft created` - Confirms success
    - `❌ Error:` - Shows specific errors
 
-## 🔐 Security
+## 🔐 Security & Privacy
 
 - **Never commit** `.env`, `gmail-token.json`, or `credentials.json` to git
 - **S3 Storage**: Gmail credentials stored in private S3 bucket with restricted access
 - **Lambda IAM Roles**: Uses AWS IAM for secure S3 access (no hardcoded credentials)
 - **API Keys**: Stored in Lambda environment variables (encrypted at rest)
 - **Private S3 Bucket**: Block all public access enabled by default
+
+**Privacy Policy**: [View our Privacy Policy](docs/PRIVACY_POLICY.md) - Learn how we handle your data
 
 ## 📝 API Permissions Required
 
